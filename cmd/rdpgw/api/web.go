@@ -153,9 +153,23 @@ func (c *Config) HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	availableHosts := c.Hosts
+
+	parameterHosts, hasParameterHosts := r.URL.Query()["host"]
+	if hasParameterHosts {
+		availableHosts = []string{}
+		for _,configHost := range c.Hosts {
+			for _,parameterHost := range parameterHosts {
+				if configHost==parameterHost {
+					append(availableHosts, configHost)
+				}
+			}
+		}
+	}
+
 	// do a round robin selection for now
 	rand.Seed(time.Now().Unix())
-	host := c.Hosts[rand.Intn(len(c.Hosts))]
+	host := availableHosts[rand.Intn(len(availableHosts))]
 	host = strings.Replace(host, "{{ preferred_username }}", userName, 1)
 
 	// split the username into user and domain
